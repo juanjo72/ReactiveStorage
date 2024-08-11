@@ -28,7 +28,7 @@ public actor ReactiveInMemoryStorage<
 
     // MARK: Lifecycle
 
-    init(
+    public init(
         downstreamScheduler: DownstreamScheduler = DispatchQueue.main
     ) {
         self.downstreamScheduler = downstreamScheduler

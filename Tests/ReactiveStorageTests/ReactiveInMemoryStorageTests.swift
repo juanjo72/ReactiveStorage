@@ -52,4 +52,57 @@ final class ReactiveInMemoryStorageTests: XCTestCase {
         XCTAssertEqual(preUpdateUser?.name, "John")
         XCTAssertEqual(postUpdateUser?.name, "Anne")
     }
+    
+    // MARK: Observables
+    
+    func testThat_GivenStorage_WhenSubscribed_ThenStoredValuesAreObserved() async {
+        // Given
+        let storage = self.makeSUT()
+        let fakeUser: User = .makeFake()
+        await storage.add(fakeUser)
+        
+        // When
+        var users: [User]?
+        _ = storage.getAllElementsObservable(of: User.self)
+            .sink {
+                users = $0
+            }
+        
+        // Then
+        XCTAssertEqual(users, [fakeUser])
+    }
+    
+    func testThat() async {
+        let storage = self.makeSUT()
+        let maxUsers = 10
+        let fakeUsers = await withTaskGroup(
+            of: User.self,
+            returning: [User].self
+        ) { group in
+            (0..<maxUsers).forEach { _ in
+                group.addTask {
+                    return User.makeFake()
+                }
+            }
+            return await group.reduce([]) { $0.appending($1) }
+        }
+        
+        var stored: [User]?
+        let x = storage.getAllElementsObservable(of: User.self)
+            .sink {
+                print($0, separator: "\n")
+                stored = $0
+            }
+        
+        await withTaskGroup(of: Void.self) { group in
+            fakeUsers.forEach { user in
+                group.addTask {
+                    await storage.add(user)
+                }
+            }
+        }
+        
+        XCTAssertEqual(stored?.sorted { $0.id < $1.id }, fakeUsers.sorted { $0.id < $1.id })
+        _ = x
+    }
 }

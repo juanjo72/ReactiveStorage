@@ -23,3 +23,9 @@ extension User {
         )
     }
 }
+
+extension User: CustomDebugStringConvertible {
+    var debugDescription: String {
+        self.id.uuidString
+    }
+}
