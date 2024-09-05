@@ -36,7 +36,7 @@ public actor ReactiveInMemoryStorage<
 
     // MARK: LocalDataSource
 
-    nonisolated public func getAllElementsObservable<Entity: Identifiable>(of type: Entity.Type) -> AnyPublisher<[Entity], Never> {
+    nonisolated public func getAllElementsObservable<Entity: EntityType>(of type: Entity.Type) -> AnyPublisher<[Entity], Never> {
         Future() { promise in
             Task {
                 let subject = await self.getSubject(of: Entity.self)
@@ -47,25 +47,27 @@ public actor ReactiveInMemoryStorage<
         }
         .receive(on: self.downstreamScheduler)
         .flatMap { $0 }
+        .removeDuplicates()
         .eraseToAnyPublisher()
     }
 
-    nonisolated public func getSingleElementObservable<Entity: Identifiable>(of type: Entity.Type, id: Entity.ID) -> AnyPublisher<Entity?, Never> {
+    nonisolated public func getSingleElementObservable<Entity: EntityType>(of type: Entity.Type, id: Entity.ID) -> AnyPublisher<Entity?, Never> {
         self.getAllElementsObservable(of: Entity.self)
             .map { $0.first { $0.id == id } }
+            .removeDuplicates()
             .eraseToAnyPublisher()
     }
 
-    public func getAllElements<Entity: Identifiable>(of type: Entity.Type) async -> [Entity] {
+    public func getAllElements<Entity: EntityType>(of type: Entity.Type) async -> [Entity] {
         self.getSubject(of: Entity.self).value
     }
 
-    public func getSingleElement<Entity: Identifiable>(of type: Entity.Type, id: Entity.ID) async -> Entity? {
+    public func getSingleElement<Entity: EntityType>(of type: Entity.Type, id: Entity.ID) async -> Entity? {
         self.getSubject(of: Entity.self).value
             .first { $0.id == id }
     }
 
-    public func add<Entity: Identifiable>(_ element: Entity) async {
+    public func add<Entity: EntityType>(_ element: Entity) async {
         let subject = self.getSubject(of: Entity.self)
         if (subject.value.contains { $0.id == element.id }) {
             subject.value = subject.value.replacingOcurrences(of: element)
@@ -74,7 +76,7 @@ public actor ReactiveInMemoryStorage<
         }
     }
 
-    public func add<Entity: Identifiable>(_ elements: [Entity]) async {
+    public func add<Entity: EntityType>(_ elements: [Entity]) async {
         let subject = self.getSubject(of: Entity.self)
         let newValues = elements.reduce(subject.value) { elements, each in
             if (elements.contains { $0.id == each.id }) {
@@ -86,18 +88,18 @@ public actor ReactiveInMemoryStorage<
         subject.value = newValues
     }
 
-    public func removeSingleElement<Entity: Identifiable>(of type: Entity.Type, id: Entity.ID) async {
+    public func removeSingleElement<Entity: EntityType>(of type: Entity.Type, id: Entity.ID) async {
         let subject = self.getSubject(of: Entity.self)
         subject.value.removeAll { $0.id == id }
     }
 
-    public func removeAllElements<Entity: Identifiable>(of type: Entity.Type) async {
+    public func removeAllElements<Entity: EntityType>(of type: Entity.Type) async {
         self.getSubject(of: Entity.self).value = []
     }
 
     // MARK: Private
 
-    private func getSubject<Entity: Identifiable>(of type: Entity.Type) -> CurrentValueSubject<[Entity], Never> {
+    private func getSubject<Entity: EntityType>(of type: Entity.Type) -> CurrentValueSubject<[Entity], Never> {
         let key = String(describing: type)
         return store[key] as? CurrentValueSubject<[Entity], Never> ?? {
             let newSubject = CurrentValueSubject<[Entity], Never>([])
