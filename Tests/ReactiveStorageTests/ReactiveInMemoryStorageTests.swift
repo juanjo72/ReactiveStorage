@@ -2,7 +2,7 @@
 //  ReactiveInMemoryStorageTests.swift
 //  ReactiveStorageTests
 //
-//  Created by Juanjo García Villaescusa on 9/8/24.
+//  Created on 9/8/24.
 //
 
 import Combine
