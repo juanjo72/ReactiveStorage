@@ -48,6 +48,7 @@ public actor ReactiveInMemoryStorage<
         .receive(on: self.downstreamScheduler)
         .flatMap { $0 }
         .removeDuplicates()
+        .share()
         .eraseToAnyPublisher()
     }
 
@@ -108,14 +109,3 @@ public actor ReactiveInMemoryStorage<
         }()
     }
 }
-
-#if DEBUG
-extension ReactiveInMemoryStorage {
-    public func dump() -> String {
-        self.store.map { key, subject in
-            let elements = (subject as? CurrentValueSubject<[any EntityType], Never>)?.value ?? []
-            return "\(key): \(elements)"
-        }.joined(separator: ", ")
-    }
-}
-#endif
