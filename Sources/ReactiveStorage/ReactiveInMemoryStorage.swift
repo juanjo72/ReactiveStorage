@@ -48,7 +48,6 @@ public actor ReactiveInMemoryStorage<
         .receive(on: self.downstreamScheduler)
         .flatMap { $0 }
         .removeDuplicates()
-        .share()
         .eraseToAnyPublisher()
     }
 
