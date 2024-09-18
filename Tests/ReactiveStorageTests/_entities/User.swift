@@ -12,20 +12,16 @@ struct User: Identifiable, Equatable {
     let name: String
 }
 
-extension User {
-    static func makeFake(
-        id: UUID = UUID(),
-        name: String = "A name"
-    ) -> Self {
-        User(
-            id: id,
-            name: name
-        )
-    }
-}
+
 
 extension User: CustomDebugStringConvertible {
     var debugDescription: String {
         self.id.uuidString
+    }
+}
+
+extension User: Comparable {
+    static func < (lhs: User, rhs: User) -> Bool {
+        lhs.id.uuidString < rhs.id.uuidString
     }
 }

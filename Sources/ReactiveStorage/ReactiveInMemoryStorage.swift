@@ -14,25 +14,15 @@ import Foundation
 ///   - downstreamScheduler: Publishers' downstream scheduler
 ///
 ///
-public actor ReactiveInMemoryStorage<
-    DownstreamScheduler: Scheduler
->: ReactiveStorageProtocol {
-
-    // MARK: Injected
-
-    private let downstreamScheduler: DownstreamScheduler
+public actor ReactiveInMemoryStorage: ReactiveStorageProtocol {
 
     // MARK: State
 
     private var store = [String: any Subject]()
-
+    
     // MARK: Lifecycle
-
-    public init(
-        downstreamScheduler: DownstreamScheduler = DispatchQueue.main
-    ) {
-        self.downstreamScheduler = downstreamScheduler
-    }
+    
+    public init() {}
 
     // MARK: LocalDataSource
 
@@ -40,12 +30,9 @@ public actor ReactiveInMemoryStorage<
         Future() { promise in
             Task {
                 let subject = await self.getSubject(of: Entity.self)
-                self.downstreamScheduler.schedule {
-                    promise(.success(subject))
-                }
+                promise(.success(subject))
             }
         }
-        .receive(on: self.downstreamScheduler)
         .flatMap { $0 }
         .removeDuplicates()
         .eraseToAnyPublisher()
@@ -88,9 +75,14 @@ public actor ReactiveInMemoryStorage<
         subject.value = newValues
     }
 
-    public func removeSingleElement<Entity: EntityType>(of type: Entity.Type, id: Entity.ID) async {
+    public func removeSingleElement<Entity: EntityType>(of type: Entity.Type, id: Entity.ID) async throws {
         let subject = self.getSubject(of: Entity.self)
-        subject.value.removeAll { $0.id == id }
+        guard subject.value.map(\.id).contains(id) else {
+            return
+        }
+        var newValues = subject.value
+        newValues.removeAll { $0.id == id }
+        subject.value = newValues
     }
 
     public func removeAllElements<Entity: EntityType>(of type: Entity.Type) async {

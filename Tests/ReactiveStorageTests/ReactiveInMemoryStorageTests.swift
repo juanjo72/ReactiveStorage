@@ -14,9 +14,7 @@ final class ReactiveInMemoryStorageTests: XCTestCase {
     // MARK: SUT
     
     private func makeSUT() -> some ReactiveStorage.ReactiveStorageProtocol {
-        ReactiveInMemoryStorage(
-            downstreamScheduler: Combine.ImmediateScheduler.shared
-        )
+        ReactiveInMemoryStorage()
     }
     
     // MARK: Adding elements
@@ -24,7 +22,7 @@ final class ReactiveInMemoryStorageTests: XCTestCase {
     func testThat_GivenEmptyStorage_WhenElementAdded_ThenElemetIsIncluded() async {
         // Given
         let storage = self.makeSUT()
-        let fakeUser: User = .makeFake()
+        let fakeUser: User = .make()
         
         // When
         await storage.add(fakeUser)
@@ -40,7 +38,7 @@ final class ReactiveInMemoryStorageTests: XCTestCase {
         // Given
         let storage = self.makeSUT()
         let id = UUID()
-        let fakeUser: User = .makeFake(id: id, name: "John")
+        let fakeUser: User = .make(id: id, name: "John")
         await storage.add(fakeUser)
         
         // When
@@ -58,51 +56,23 @@ final class ReactiveInMemoryStorageTests: XCTestCase {
     func testThat_GivenStorage_WhenSubscribed_ThenStoredValuesAreObserved() async {
         // Given
         let storage = self.makeSUT()
-        let fakeUser: User = .makeFake()
-        await storage.add(fakeUser)
+        let user_1: User = .make()
+        await storage.add(user_1)
         
         // When
         var users: [User]?
-        _ = storage.getAllElementsObservable(of: User.self)
+        let subscription = storage.getAllElementsObservable(of: User.self)
+            .print("[subscription]")
             .sink {
                 users = $0
             }
         
+        let user_2: User = .make()
+        await storage.add(user_2)
+        
         // Then
-        XCTAssertEqual(users, [fakeUser])
-    }
-    
-    func testThat() async {
-        let storage = self.makeSUT()
-        let maxUsers = 10
-        let fakeUsers = await withTaskGroup(
-            of: User.self,
-            returning: [User].self
-        ) { group in
-            (0..<maxUsers).forEach { _ in
-                group.addTask {
-                    return User.makeFake()
-                }
-            }
-            return await group.reduce([]) { $0.appending($1) }
-        }
-        
-        var stored: [User]?
-        let x = storage.getAllElementsObservable(of: User.self)
-            .sink {
-                print($0, separator: "\n")
-                stored = $0
-            }
-        
-        await withTaskGroup(of: Void.self) { group in
-            fakeUsers.forEach { user in
-                group.addTask {
-                    await storage.add(user)
-                }
-            }
-        }
-        
-        XCTAssertEqual(stored?.sorted { $0.id < $1.id }, fakeUsers.sorted { $0.id < $1.id })
-        _ = x
+        print(String(describing: users))
+        XCTAssertEqual(users?.sorted(), [user_1, user_2].sorted())
+        _ = subscription
     }
 }

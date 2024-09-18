@@ -16,6 +16,6 @@ public protocol ReactiveStorageProtocol {
     func getSingleElement<Entity: EntityType>(of type: Entity.Type, id: Entity.ID) async -> Entity?
     func add<Entity: EntityType>(_ element: Entity) async
     func add<Entity: EntityType>(_ elements: [Entity]) async
-    func removeSingleElement<Entity: EntityType>(of type: Entity.Type, id: Entity.ID) async
+    func removeSingleElement<Entity: EntityType>(of type: Entity.Type, id: Entity.ID) async throws
     func removeAllElements<Entity: EntityType>(of type: Entity.Type) async
 }
