@@ -12,7 +12,7 @@ struct User: Identifiable, Equatable {
 }
 ```
 
-Create the RemoteResource:
+Create the store:
 
 ```swift
 let storage = ReactiveInMemoryStorage()
@@ -29,20 +29,24 @@ storage.getAllElementsObservable(User.self)
 ```
 
 Add element:
-
 ```swift
 let user = User(id: UUID(), name: "John")
 await storage.add(user)
 ```
+If element with same id is present, is replaced.
 
 Get element:
-
 ```swift
-try await storage.getSingleElement(User.self, id: user.id)
+let user = await storage.getSingleElement(User.self, id: user.id)
+```
+
+Get all elements of a type:
+```swift
+let users = await storage.getAlllements(User.self)
 ```
 
 Remove element:
-
 ```swift
 try await storage.removeSingleElement(User.self, id: user.id)
 ```
+If element no present, an error is thrown.
