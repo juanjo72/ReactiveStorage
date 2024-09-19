@@ -1,9 +1,9 @@
 # ReactiveStorage
-A slim implementation of in-memory storage
+A slim in-memory storage. Any Identifiable & Equatable entity can be added, without predefining schema. Changes for a particular kind of entity can be observed.
 
 ## Usage
 
-Define your entity, both identifiable and equatable:
+### Define your entity:
 
 ```swift
 struct User: Identifiable, Equatable {
@@ -12,41 +12,52 @@ struct User: Identifiable, Equatable {
 }
 ```
 
-Create the store:
+### Create the store:
 
 ```swift
-let storage = ReactiveInMemoryStorage()
+let store = ReactiveInMemoryStorage()
 ```
 
-Observe elements:
+### Observe type of entity:
 
 ```swift
-storage.getAllElementsObservable(User.self)
+store.getAllElementsObservable(User.self)
     .sink { users in
-        // do something with the users
+        // do something
     }
     .store(in: &subscriptions)
 ```
 
-Add element:
+### Observe a particular entity:
+
+```swift
+store.getSingleElementObservable(User.self, id: user.id)
+    .sink { user in
+        // do something
+    }
+    .store(in: &subscriptions)
+```
+If user is not present, a nil value is emited.
+
+### Add element:
 ```swift
 let user = User(id: UUID(), name: "John")
-await storage.add(user)
+await store.add(user)
 ```
 If element with same id is present, is replaced.
 
-Get element:
+### Get element:
 ```swift
-let user = await storage.getSingleElement(User.self, id: user.id)
+let user = await store.getSingleElement(User.self, id: user.id)
 ```
 
-Get all elements of a type:
+### Get all elements of a type:
 ```swift
-let users = await storage.getAlllements(User.self)
+let users = await store.getAlllements(User.self)
 ```
 
-Remove element:
+### Remove element:
 ```swift
-try await storage.removeSingleElement(User.self, id: user.id)
+try await store.removeSingleElement(User.self, id: user.id)
 ```
 If element no present, an error is thrown.
